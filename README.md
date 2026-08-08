@@ -42,7 +42,7 @@ the same wrapper:
 
 So the primary rule is a plain selector:
 
-```
+```css
 #mt-signature, [data-signature-template],
 [class*="mt-signature"], [class*="mt-old-signature"]
 ```
