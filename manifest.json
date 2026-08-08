@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Mailsuite Signature Stripper",
+  "version": "0.1.0",
+  "description": "Removes the Mailsuite/Mailtrack promotional signature from your outgoing Gmail messages. Read tracking keeps working.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://mail.google.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["src/strip.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "Mailsuite Signature Stripper"
+  }
+}

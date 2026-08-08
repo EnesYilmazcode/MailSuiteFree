@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Signature Stripper</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #1f2328;
+        --muted: #656d76;
+        --line: #d8dee4;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1c2128;
+          --fg: #e6edf3;
+          --muted: #8b949e;
+          --line: #30363d;
+        }
+      }
+      body {
+        margin: 0;
+        padding: 14px 16px;
+        width: 250px;
+        background: var(--bg);
+        color: var(--fg);
+        font: 13px/1.45 system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      label {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+        margin: 10px 0;
+        cursor: pointer;
+      }
+      input {
+        margin: 2px 0 0;
+        flex: none;
+      }
+      .hint {
+        display: block;
+        color: var(--muted);
+        font-size: 11.5px;
+      }
+      footer {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 11.5px;
+      }
+      b {
+        color: var(--fg);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Mailsuite Signature Stripper</h1>
+
+    <label>
+      <input type="checkbox" id="enabled" />
+      <span>
+        Strip the signature
+        <span class="hint">Read tracking is left alone.</span>
+      </span>
+    </label>
+
+    <label>
+      <input type="checkbox" id="keepUnsubscribe" />
+      <span>
+        Keep unsubscribe links
+        <span class="hint">Leave on if you send campaigns.</span>
+      </span>
+    </label>
+
+    <footer><b id="removed">0</b> signatures removed</footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
