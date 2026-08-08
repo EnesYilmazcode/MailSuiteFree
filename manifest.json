@@ -8,7 +8,7 @@
   "content_scripts": [
     {
       "matches": ["https://mail.google.com/*"],
-      "js": ["src/strip.js"],
+      "js": ["src/detect.js", "src/strip.js"],
       "run_at": "document_idle",
       "all_frames": true
     }
