@@ -53,8 +53,16 @@
     return (w > 0 && w <= 3) || (h > 0 && h <= 3);
   };
 
-  /** True when this element holds the signature and none of the user's own text. */
+  /** True when this element holds the signature and nothing of the user's own. */
   const signatureOnly = (el) => {
+    /* An <img> contributes no textContent, so without this an element wrapping
+       somebody's inline screenshot next to the signature would read as
+       signature-only and take the screenshot with it. A real image is never
+       just a signature, whatever the text around it says. */
+    for (const img of el.querySelectorAll('img')) {
+      if (!looksLikeBeacon(img)) return false;
+    }
+
     let text = el.textContent || '';
     for (const a of el.querySelectorAll('a')) {
       const label = a.textContent;
@@ -88,12 +96,17 @@
     return block;
   };
 
-  /** Move any tracking beacon out of the block before the block is deleted. */
+  /**
+   * Move any tracking beacon out of the block before the block is deleted.
+   * Parked where the block stood rather than at the end of the body, so a
+   * signature that was not last does not send the pixel past what followed it.
+   */
   const rescueBeacons = (block, root) => {
+    const parent = block.parentNode || root;
     let rescued = 0;
     for (const img of Array.from(block.querySelectorAll('img'))) {
       if (!looksLikeBeacon(img)) continue;
-      root.appendChild(img);
+      parent.insertBefore(img, block);
       rescued += 1;
     }
     return rescued;
@@ -130,8 +143,10 @@
       const block = signatureBlock(a, root);
       if (!block) continue;
       if (keepUnsubscribe && UNSUB.test(block.textContent || '')) continue;
-      rescueBeacons(block, root);
+      /* Trim first. rescueBeacons parks the pixel immediately before the block,
+         which would otherwise stop trimBefore seeing the blank line above it. */
       trimBefore(block);
+      rescueBeacons(block, root);
       block.remove();
       removed += 1;
     }
