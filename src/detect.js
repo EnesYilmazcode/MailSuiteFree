@@ -17,6 +17,23 @@
 
   const PROMO_HOST = /(^|\.)(mailtrack\.io|mailsuite\.com)$/i;
 
+  /*
+   * How Mailsuite marks its own signature, read out of gmail.end.bundle.js in
+   * release 12.87.0. Every one of the seven signature templates renders:
+   *
+   *   <div id="mt-signature" contenteditable="false" g_editable="false">
+   *     <table data-signature-template="senderNotified" data-signature-version="N">
+   *
+   * They label it themselves, so there is nothing to infer. The heuristic below
+   * is only a fallback for markup that does not carry these.
+   */
+  const SIGNATURE_MARKERS = [
+    '#mt-signature',
+    '[data-signature-template]',
+    '[class*="mt-signature"]',
+    '[class*="mt-old-signature"]',
+  ].join(',');
+
   /* Visible signature wording, lifted from Mailsuite's own popup.bundle.js i18n
      table (senderNotifiedSignatureText and its 12 / 13 / 15 / 17 / 18 variants,
      every locale the extension ships). Only ever used to subtract known text
@@ -131,6 +148,29 @@
   };
 
   /**
+   * Elements Mailsuite has labelled as its own signature.
+   *
+   * Only the outermost are returned. `mt-signature-logo` sits inside
+   * `#mt-signature` and matches the same selector, and removing the child on
+   * its own would leave a gutted wrapper behind.
+   */
+  const markedBlocks = (root) => {
+    const all = Array.from(root.querySelectorAll(SIGNATURE_MARKERS));
+    return all.filter((el) => !all.some((other) => other !== el && other.contains(el)));
+  };
+
+  /** Shared teardown: keep the beacon, close the gap, drop the block. */
+  const removeBlock = (block, root, keepUnsubscribe) => {
+    if (keepUnsubscribe && UNSUB.test(block.textContent || '')) return false;
+    /* Trim first. rescueBeacons parks the pixel immediately before the block,
+       which would otherwise stop trimBefore seeing the blank line above it. */
+    trimBefore(block);
+    rescueBeacons(block, root);
+    block.remove();
+    return true;
+  };
+
+  /**
    * Strip every signature under `root`, returning how many were removed.
    * `keepUnsubscribe` leaves blocks carrying an opt-out link alone, since bulk
    * mail is required to carry one under CAN-SPAM and GDPR.
@@ -138,25 +178,32 @@
   const scrubRoot = (root, options) => {
     const keepUnsubscribe = !options || options.keepUnsubscribe !== false;
     let removed = 0;
+
+    /* Mailsuite's own markers first. These are exact, so none of the
+       signature-only guesswork below applies: the logo image inside the block
+       is theirs, not the user's, and must not stop the removal. */
+    for (const block of markedBlocks(root)) {
+      if (!root.contains(block)) continue;
+      if (removeBlock(block, root, keepUnsubscribe)) removed += 1;
+    }
+
+    /* Fallback for markup that carries no marker. Conservative on purpose. */
     for (const a of Array.from(root.querySelectorAll('a'))) {
       if (!root.contains(a) || !promoAnchor(a)) continue;
       const block = signatureBlock(a, root);
       if (!block) continue;
-      if (keepUnsubscribe && UNSUB.test(block.textContent || '')) continue;
-      /* Trim first. rescueBeacons parks the pixel immediately before the block,
-         which would otherwise stop trimBefore seeing the blank line above it. */
-      trimBefore(block);
-      rescueBeacons(block, root);
-      block.remove();
-      removed += 1;
+      if (removeBlock(block, root, keepUnsubscribe)) removed += 1;
     }
+
     return removed;
   };
 
   return {
     PROMO_HOST,
+    SIGNATURE_MARKERS,
     PHRASES,
     UNSUB,
+    markedBlocks,
     promoAnchor,
     looksLikeBeacon,
     signatureOnly,
