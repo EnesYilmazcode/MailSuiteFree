@@ -127,6 +127,74 @@ test('the beacon stays where the signature was, not at the end of the body', () 
   assert.equal(root.querySelectorAll('br').length, 0, 'blank line still trimmed');
 });
 
+/*
+ * Real markup, transcribed from gmail.end.bundle.js in Mailsuite 12.87.0. All
+ * seven signature templates share the #mt-signature wrapper and the
+ * data-signature-template attribute; the inner layout differs per version.
+ */
+const realSignature = (version) => `
+<div id="mt-signature" contenteditable="false" g_editable="false">
+  <table border="0" cellpadding="8" cellspacing="0" contenteditable="false" g_editable="false"
+         data-signature-template="senderNotified" data-signature-version="${version}"
+         style="user-select: none;">
+    <tr style="display:flex;">
+      <td style="padding:0 4px 0 0">
+        <img src="https://s3.amazonaws.com/mailtrack-signature/logo-grey.png" alt="Mailsuite"
+             class="mt-no-pointer-events" width="24" height="20" g_editable="false">
+      </td>
+      <td style="padding:0 10px 0 0">
+        <span style="color:#333;font-size:12px">Sent with Mailtrack &nbsp;·&nbsp;
+          <a href="https://mailsuite.com/en/pricing" target="_blank">Mailsuite</a></span>
+      </td>
+      <td class="mt-remove-signature-button-container" style="padding:4px 0 0 0"></td>
+    </tr>
+  </table>
+</div>`;
+
+test('removes the real signature whole, logo and all', () => {
+  for (const version of [12, 13, 15, 16, 17, 18]) {
+    const root = compose('<div>Hi, notes below.</div>' + realSignature(version));
+
+    assert.equal(detect.scrubRoot(root), 1, `version ${version}`);
+    assert.equal(root.querySelector('#mt-signature'), null, `version ${version}: wrapper left behind`);
+    assert.equal(root.querySelectorAll('table').length, 0, `version ${version}: table left behind`);
+    assert.equal(root.querySelectorAll('img').length, 0, `version ${version}: logo left behind`);
+    assert.match(root.textContent, /Hi, notes below/);
+  }
+});
+
+test("their logo goes, the user's own image next to it stays", () => {
+  const root = compose(
+    '<div>Screenshot attached</div>' +
+      '<div><img src="cid:screenshot.png" width="800" height="600"></div>' +
+      realSignature(17),
+  );
+
+  assert.equal(detect.scrubRoot(root), 1);
+  assert.equal(root.querySelectorAll('img[src="cid:screenshot.png"]').length, 1);
+  assert.equal(root.querySelectorAll('img[src*="mailtrack-signature"]').length, 0);
+});
+
+test('a beacon inside the real signature survives it', () => {
+  const withBeacon = realSignature(17).replace(
+    '</table>',
+    '</table><img src="https://mailtrack.io/trace/mail/' + 'a'.repeat(40) + '.png" width="1" height="1">',
+  );
+  const root = compose('<div>Body</div>' + withBeacon);
+
+  assert.equal(detect.scrubRoot(root), 1);
+  assert.equal(root.querySelector('#mt-signature'), null);
+  assert.equal(root.querySelectorAll('img[src*="/trace/mail/"]').length, 1);
+});
+
+test('markedBlocks returns only the outermost match', () => {
+  const root = compose(realSignature(17).replace('alt="Mailsuite"', 'alt="Mailsuite" class="mt-signature-logo"'));
+  const blocks = detect.markedBlocks(root);
+
+  assert.equal(blocks.length, 1, 'the nested logo must not count as its own block');
+  assert.equal(blocks[0].id, 'mt-signature');
+});
+
 test('promoAnchor only matches Mailsuite hosts', () => {
   const root = compose(
     '<a id="a" href="https://mailsuite.com/x">a</a>' +

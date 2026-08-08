@@ -31,20 +31,38 @@ been removed, which is the quickest way to confirm it is working.
 
 ## How it finds the signature
 
-Detection anchors on the promotional link rather than on Mailsuite's markup,
-which makes it survive their releases:
+Mailsuite labels its own signature, so there is nothing to guess. Every one of
+the seven signature templates in `gmail.end.bundle.js` (release 12.87.0) renders
+the same wrapper:
 
-1. Find an `<a>` inside the Gmail compose body pointing at `mailtrack.io` or
-   `mailsuite.com`.
-2. Walk up from that link to the outermost wrapper that still contains *nothing
-   but* signature, stopping the instant a parent holds text you wrote. A block
-   is "nothing but signature" when removing the promo link text and the known
-   signature wording leaves it empty.
-3. Rescue any tracking beacon inside, drop the blank lines above, delete.
+```html
+<div id="mt-signature" contenteditable="false" g_editable="false">
+  <table data-signature-template="senderNotified" data-signature-version="17">
+```
 
-The signature wording is taken from Mailsuite's own `popup.bundle.js` i18n table
-(`senderNotifiedSignatureText` and its `12` / `13` / `15` / `17` / `18`
-variants), covering all eleven locales the extension ships.
+So the primary rule is a plain selector:
+
+```
+#mt-signature, [data-signature-template],
+[class*="mt-signature"], [class*="mt-old-signature"]
+```
+
+Only the outermost match is taken, because `mt-signature-logo` sits inside
+`#mt-signature` and matches the same selector.
+
+**Fallback.** If nothing carries a marker, it looks for an `<a>` pointing at
+`mailtrack.io` or `mailsuite.com` and climbs to the outermost wrapper that holds
+*nothing but* signature, stopping the instant a parent contains text you wrote
+or an image you inserted. A block counts as signature-only when removing the
+promo link text and the known signature wording leaves it empty. That wording
+comes from Mailsuite's own i18n table and covers all eleven shipped locales.
+
+The fallback is deliberately quick to give up. Leaving a signature behind is a
+far better failure than deleting a paragraph.
+
+Either way it rescues the tracking beacon
+(`https://mailtrack.io/trace/mail/<hash>.png`), drops the blank line above, then
+deletes.
 
 It runs on a debounced `MutationObserver`, since Mailsuite inserts the signature
 while you are still composing, plus a scrub on the Send button in both capture
@@ -52,26 +70,19 @@ and bubble phase to cover a signature injected at send time.
 
 ## Status
 
-Version 0.1.0, works from inference rather than observation. The selectors were
-derived from Mailsuite's popup bundle and from how Gmail structures a compose
-body, not from a captured sample of the real injected signature. Tightening that
-up is the next step, see below.
+Version 0.1.0. Detection is verified against the real markup rather than
+inferred from it. 15 tests, including fixtures transcribed from all six live
+signature versions.
+
+Not yet verified: nobody has loaded this into Chrome and watched it work against
+live Gmail. The compose-body and Send-button selectors are still inference.
 
 ## Before you rely on it
 
 Mailsuite already ships a built-in opt-out: *"Don't add the Mailsuite signature
-to my emails"*, in its signature settings. If that toggle sticks for you, you do
-not need this extension. It is worth thirty seconds to check first.
-
-## Contributing a real sample
-
-To make detection exact rather than inferred, capture the actual markup:
-
-1. Compose an email to yourself with Mailsuite enabled.
-2. Before sending, right-click the signature line in the compose box, Inspect.
-3. Copy the outer HTML of the element wrapping the whole signature.
-
-Open an issue with that snippet, with your address redacted.
+to my emails"*, in its signature settings, and it renders a Remove button inside
+the signature itself. If either sticks for you, you do not need this extension.
+Worth thirty seconds to check first.
 
 ## Licence
 
