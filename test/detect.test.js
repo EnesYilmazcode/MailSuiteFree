@@ -83,6 +83,50 @@ test('localised signatures are recognised', () => {
   }
 });
 
+test("an inline image beside the signature is not collateral", () => {
+  const root = compose(
+    '<div>See attached</div>' +
+      '<div><img src="cid:screenshot.png" width="800" height="600">' +
+      'Sender notified by <a href="https://mailsuite.com/x">Mailsuite</a></div>',
+  );
+
+  assert.equal(detect.scrubRoot(root), 0, 'a block holding a real image is not just a signature');
+  assert.equal(root.querySelectorAll('img[src="cid:screenshot.png"]').length, 1);
+});
+
+test('climbs through nested wrappers to take the whole block', () => {
+  const root = compose(
+    '<div>Body</div>' +
+      '<div class="outer"><div class="inner">' +
+      'Sender notified by <a href="https://mailsuite.com/x">Mailsuite</a>' +
+      '</div></div>',
+  );
+
+  assert.equal(detect.scrubRoot(root), 1);
+  assert.equal(root.querySelectorAll('.outer').length, 0, 'the outer wrapper should go too');
+  assert.match(root.textContent, /Body/);
+});
+
+test('the beacon stays where the signature was, not at the end of the body', () => {
+  const root = compose(
+    '<div>Body</div>' +
+      '<div><br></div>' +
+      '<div>Sender notified by <a href="https://mailsuite.com/x">Mailsuite</a>' +
+      '<img src="https://mailtrack.io/trace/mail/abc.png" width="1" height="1"></div>' +
+      '<div>Trailing quoted thread</div>',
+  );
+
+  assert.equal(detect.scrubRoot(root), 1);
+
+  const kids = Array.from(root.children);
+  const beacon = kids.findIndex((el) => el.tagName === 'IMG');
+  const trailing = kids.findIndex((el) => /Trailing/.test(el.textContent));
+
+  assert.notEqual(beacon, -1, 'beacon survived');
+  assert.ok(beacon < trailing, 'beacon did not jump past the trailing content');
+  assert.equal(root.querySelectorAll('br').length, 0, 'blank line still trimmed');
+});
+
 test('promoAnchor only matches Mailsuite hosts', () => {
   const root = compose(
     '<a id="a" href="https://mailsuite.com/x">a</a>' +
