@@ -29,6 +29,10 @@
    */
   const SIGNATURE_MARKERS = [
     '#mt-signature',
+    /* Gmail rewrites ids when it quotes or renders a message, turning
+       id="mt-signature" into id="m_-1234...mt-signature", which is why
+       Mailsuite ships its own un-prefixing helper. Match on contains. */
+    '[id*="mt-signature"]',
     '[data-signature-template]',
     '[class*="mt-signature"]',
     '[class*="mt-old-signature"]',
