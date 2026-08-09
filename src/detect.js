@@ -60,6 +60,33 @@
 
   const UNSUB = /unsubscribe|opt[-\s]?out|darse de baja|se désabonner|abmelden|annulla iscrizione|cancelar subscri|wypisz|取消訂閱|配信停止|수신 거부|सदस्यता समाप्त/i;
 
+  /* Mailsuite writes the campaign unsubscribe URL as a placeholder and only
+     substitutes it when a Campaign actually goes out. An ordinary one-to-one
+     signature carries the placeholder verbatim:
+
+       <a href="https://##mt_unsubscribe_link##">Opt out</a>
+
+     which is a dead link, not a recipient's unsubscribe. */
+  const CAMPAIGN_PLACEHOLDER = '##mt_unsubscribe_link##';
+
+  /**
+   * Whether the block carries a real, working unsubscribe link.
+   *
+   * Matching on the words alone was wrong and made the extension useless on the
+   * two most common signature variants. Both 17 and 18 render an
+   * "Unsubscribe" / "Opt out" link into every ordinary email, so a text match
+   * refused to delete almost every signature there is. What matters is whether
+   * the link actually goes anywhere.
+   */
+  const hasLiveUnsubscribe = (block) => {
+    for (const a of block.querySelectorAll('a')) {
+      const href = a.getAttribute('href') || '';
+      if (!href || href.includes(CAMPAIGN_PLACEHOLDER)) continue;
+      if (UNSUB.test(a.textContent || '') || /unsub|opt-?out/i.test(href)) return true;
+    }
+    return false;
+  };
+
   const PUNCTUATION = /[\s .,;:·|—–()[\]-]/g;
 
   /** A link out to Mailsuite's own site, which is what the signature always is. */
@@ -165,7 +192,7 @@
 
   /** Shared teardown: keep the beacon, close the gap, drop the block. */
   const removeBlock = (block, root, keepUnsubscribe) => {
-    if (keepUnsubscribe && UNSUB.test(block.textContent || '')) return false;
+    if (keepUnsubscribe && hasLiveUnsubscribe(block)) return false;
     /* Trim first. rescueBeacons parks the pixel immediately before the block,
        which would otherwise stop trimBefore seeing the blank line above it. */
     trimBefore(block);
@@ -207,6 +234,8 @@
     SIGNATURE_MARKERS,
     PHRASES,
     UNSUB,
+    CAMPAIGN_PLACEHOLDER,
+    hasLiveUnsubscribe,
     markedBlocks,
     promoAnchor,
     looksLikeBeacon,

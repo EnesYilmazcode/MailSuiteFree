@@ -187,6 +187,60 @@ test('a beacon inside the real signature survives it', () => {
   assert.equal(root.querySelectorAll('img[src*="/trace/mail/"]').length, 1);
 });
 
+/*
+ * Captured verbatim from a live Gmail compose window, Mailsuite 12.87.0,
+ * signature version 18. Note the opt-out href is the unsubstituted campaign
+ * placeholder, so it is a dead link, not a recipient's unsubscribe.
+ */
+const CAPTURED_V18 = `<div id="mt-signature" contenteditable="false" g_editable="false">
+        <table border="0" cellpadding="8" cellspacing="0" contenteditable="false" g_editable="false" data-signature-template="senderNotified" data-signature-version="18" style="user-select: none;">
+            <tbody><tr style="display:flex;">
+                <td style="padding:0 4px 0 0">
+                    <img src="https://s3.amazonaws.com/mailtrack-signature/logo-grey.png" alt="Mailsuite" class="mt-no-pointer-events" width="24" height="20" g_editable="false">
+                </td>
+                <td style="padding:0 10px 0 0">
+                    <span style="color:#333;font-size:12px">Sender notified with Mailtrack &nbsp;·&nbsp; <a href="https://##mt_unsubscribe_link##" target="_blank" style="color:#666">Opt out</a></span><br>
+                </td>
+                <td><span style="color: transparent; font-size: 0;">08/08/26, 10:33:25 PM</span></td>
+                <td class="mt-remove-signature-button-container" style="padding:4px 0 0 0">
+                    <div class="mt-remove-signature-button center" g_editable="false">
+                      <button class="mt-remove" style="display:none;"><span style="color: #E55A50">Remove</span></button>
+                    </div>
+                </td>
+            </tr>
+        </tbody></table>
+    </div>`;
+
+test('removes the captured live v18 signature, Opt out link and all', () => {
+  const root = compose('<div>testing</div>' + CAPTURED_V18);
+
+  assert.equal(detect.scrubRoot(root), 1, 'default settings must remove it');
+  assert.equal(root.querySelector('#mt-signature'), null);
+  assert.doesNotMatch(root.textContent, /Sender notified with Mailtrack/);
+  assert.match(root.textContent, /testing/);
+});
+
+test('the campaign placeholder is not mistaken for a live unsubscribe', () => {
+  const root = compose(CAPTURED_V18);
+  const block = root.querySelector('#mt-signature');
+
+  assert.equal(
+    detect.hasLiveUnsubscribe(block),
+    false,
+    'href is the unsubstituted placeholder, so the link goes nowhere',
+  );
+  assert.equal(detect.UNSUB.test(block.textContent), true, 'the words are still there, which is why matching on text was wrong');
+});
+
+test('a real campaign unsubscribe is still protected', () => {
+  const real = CAPTURED_V18.replace('https://##mt_unsubscribe_link##', 'https://mailsuite.com/unsubscribe/9f2a1c');
+  const block = compose(real).querySelector('#mt-signature');
+  assert.equal(detect.hasLiveUnsubscribe(block), true);
+
+  assert.equal(detect.scrubRoot(compose(real), { keepUnsubscribe: true }), 0, 'kept by default');
+  assert.equal(detect.scrubRoot(compose(real), { keepUnsubscribe: false }), 1, 'removed when told to');
+});
+
 test('catches the signature after Gmail has prefixed the id', () => {
   /* Gmail rewrites ids when it renders or quotes a message, which is why
      Mailsuite ships its own un-prefixing helper. */
