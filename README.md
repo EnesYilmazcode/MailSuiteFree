@@ -28,60 +28,16 @@ This, and only this:
 ## How Mailsuite works, and why deleting this is safe
 
 Their extension is a thin client. The tracking happens on **their server**, not
-in your browser. When you compose, it slips two separate things into the email:
+in your browser, and the watermark plays no part in it.
 
-```text
-  your email body
-  ┌──────────────────────────────────────┐
-  │ Hi Bob, here's the doc.              │  <- you wrote this
-  │                                      │
-  │ <img src="mailtrack.io/trace/mail/   │  <- THE TRACKER
-  │      a3f9....png" width=1 height=1>  │     invisible, does all the work
-  │                                      │
-  │ <div id="mt-signature">              │  <- THE WATERMARK
-  │    Sent with Mailtrack               │     visible, does nothing
-  │ </div>                               │     it is an advert
-  └──────────────────────────────────────┘
-```
-
-Then the loop that actually gives you read receipts:
-
-```text
- 1  you hit send
-        |
-        v
- 2  Gmail mails the HTML, pixel included
-        |
-        v
- 3  Bob opens it. his mail client loads
-    that 1x1 image from mailsuite.com
-        |
-        v
- 4  their server logs "hash a3f9 = opened"
-        |
-        v
- 5  your Mailsuite extension polls
-    /trace/2/status and paints the ticks
-```
+![How it works](docs/how-it-works.svg)
 
 The watermark appears nowhere in that loop. It is an advert sitting in the
 message body. Removing it changes nothing about steps 1 through 5.
 
-## Where this extension sits
-
-It does not modify, patch or replace Mailsuite. Both run side by side:
-
-```text
-   Mailsuite    ──►  injects  [ pixel ] + [ watermark ]
-                                  │            │
-   MailSuiteFree ──►  deletes ────┼────────────┘
-                                  │
-                            pixel untouched
-                            tracking loop intact
-```
-
-Everything of theirs carries on: read receipts, notifications, the dashboard,
-campaigns, link tracking. You lose the advert and nothing else.
+This extension does not modify, patch or replace Mailsuite. Both run side by
+side, and everything of theirs carries on: read receipts, notifications, the
+dashboard, campaigns, link tracking. You lose the advert and nothing else.
 
 ## Install
 
@@ -185,12 +141,47 @@ test/              fixtures, including real transcribed markup
 The split exists so the part that decides what gets deleted out of your email
 can be tested without a browser.
 
-## Before you rely on any of this
+## Try their own Remove button first
 
-Mailsuite already ships its own opt-out, *"Don't add the Mailsuite signature to
-my emails"*, in its signature settings. It also renders a Remove button inside
-the signature itself. If either sticks for you, you do not need this extension.
-Worth thirty seconds to check first.
+Mailsuite renders a Remove control inside the signature. Whether it sticks
+depends on which signature variant your account was assigned, which is decided
+server side. From `kA()`, the click handler, in `gmail.end.bundle.js`:
+
+```text
+  variant 17 or 18   ──►  dialog, then on confirm:
+                          POST /settings/update/signature
+                               { signatureEnabled: false }
+                          persists on your account. permanent.
+
+  variant 11 to 16   ──►  strips it from this one email only,
+                          and shows the upgrade modal unless your
+                          account carries the disableSignature
+                          permission
+```
+
+So **if you are on variant 17 or 18, click Remove once and you are done.** You
+do not need this extension at all. Check
+`document.querySelector('[data-signature-version]')` in the Gmail console to see
+which you have.
+
+If you are on 11 to 16, their button is per-email and may nag, which is what
+this extension is for.
+
+### Why this extension does not just click their button for you
+
+Considered and rejected, see [#3](../../issues/3):
+
+- It only truly persists on two of the eight variants, and the variant is not
+  ours to choose.
+- On the others it can trigger the upgrade modal on every send.
+- The persisting path is a **server call that changes an account setting**.
+  A local extension quietly flipping a setting on your Mailsuite account is a
+  much bigger action than deleting a node from a draft, and a much ruder
+  surprise if you did not expect it.
+
+Deleting the `<div>` locally does the same visible job, works on every variant,
+touches nothing on their servers, and stops the moment you switch the extension
+off.
 
 ## Licence
 
