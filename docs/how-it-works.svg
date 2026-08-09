@@ -1,81 +1,69 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430"
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="424" viewBox="0 0 760 424"
      font-family="ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
-
-  <style>
-    .t   { fill: #6b7280; font-size: 13px; }
-    .h   { fill: #6b7280; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; fill: #6b7280; }
-    .box { fill: none; stroke: #9ca3af; stroke-width: 1.5; rx: 6; }
-    .kill{ stroke: #dc2626; }
-    .keep{ stroke: #059669; }
-    .arw { stroke: #9ca3af; stroke-width: 1.5; fill: none; }
-    .red { fill: #dc2626; }
-    .grn { fill: #059669; }
-  </style>
-
+  <!--
+    Every colour is an inline presentation attribute on purpose. GitHub
+    sanitises SVG, and if a <style> block were stripped these rects would fall
+    back to fill:black and swallow the diagram.
+    Greys chosen to stay legible on both light and dark README backgrounds.
+  -->
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/>
     </marker>
   </defs>
 
-  <!-- ================= the email ================= -->
-  <text x="24" y="28" class="h">WHAT MAILSUITE PUTS IN YOUR EMAIL</text>
+  <!-- ===================== the email ===================== -->
+  <text x="24" y="26" fill="#6b7280" font-size="12" font-weight="700" letter-spacing="1">WHAT MAILSUITE PUTS IN YOUR EMAIL</text>
 
-  <rect x="24" y="42" width="330" height="188" class="box"/>
-  <text x="42" y="70" class="t">Hi Bob, here's the doc.</text>
-  <text x="42" y="90" class="mono" font-size="11">your text</text>
+  <rect x="24" y="40" width="336" height="196" rx="6" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
 
-  <!-- tracker -->
-  <rect x="42" y="108" width="294" height="46" class="box keep"/>
-  <text x="54" y="127" class="mono" fill="#059669">&lt;img src=".../trace/mail/a3f9.png"&gt;</text>
-  <text x="54" y="144" class="mono" font-size="11" fill="#059669">1x1, invisible &#183; does all the work</text>
+  <text x="44" y="68" fill="#6b7280" font-size="13">Hi Bob, here's the doc.</text>
+  <text x="44" y="86" fill="#9ca3af" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">you wrote this</text>
 
-  <!-- watermark -->
-  <rect x="42" y="164" width="294" height="46" class="box kill"/>
-  <text x="54" y="183" class="mono" fill="#dc2626">&lt;div id="mt-signature"&gt;</text>
-  <text x="54" y="200" class="mono" font-size="11" fill="#dc2626">visible &#183; does nothing &#183; an advert</text>
+  <rect x="44" y="104" width="296" height="50" rx="5" fill="none" stroke="#059669" stroke-width="1.5"/>
+  <text x="56" y="124" fill="#059669" font-size="11.5" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;img src=".../trace/mail/a3f9.png"&gt;</text>
+  <text x="56" y="142" fill="#059669" font-size="11">1&#215;1, invisible &#183; does all the work</text>
 
-  <text x="24" y="256" class="grn" font-size="12">&#9679; kept</text>
-  <text x="92" y="256" class="red" font-size="12">&#9679; deleted by this extension</text>
+  <rect x="44" y="164" width="296" height="50" rx="5" fill="none" stroke="#dc2626" stroke-width="1.5"/>
+  <text x="56" y="184" fill="#dc2626" font-size="11.5" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;div id="mt-signature"&gt;</text>
+  <text x="56" y="202" fill="#dc2626" font-size="11">visible &#183; does nothing &#183; an advert</text>
 
-  <!-- ================= the loop ================= -->
-  <text x="430" y="28" class="h">HOW THE READ RECEIPT HAPPENS</text>
+  <circle cx="30" cy="258" r="5" fill="#059669"/>
+  <text x="42" y="262" fill="#6b7280" font-size="12">kept, tracking needs it</text>
+  <circle cx="30" cy="280" r="5" fill="#dc2626"/>
+  <text x="42" y="284" fill="#6b7280" font-size="12">deleted by this extension</text>
 
-  <rect x="430" y="42" width="306" height="34" class="box"/>
-  <text x="444" y="64" class="t"><tspan font-weight="700">1</tspan>  you hit send</text>
+  <!-- ===================== where we sit ===================== -->
+  <text x="24" y="326" fill="#6b7280" font-size="12" font-weight="700" letter-spacing="1">WHERE THIS EXTENSION SITS</text>
+  <text x="24" y="350" fill="#6b7280" font-size="12">Mailsuite injects both. Nothing of theirs is patched or</text>
+  <text x="24" y="368" fill="#6b7280" font-size="12">replaced. This deletes one &lt;div&gt; from the compose box</text>
+  <text x="24" y="386" fill="#6b7280" font-size="12">before send, and leaves everything else running:</text>
+  <text x="24" y="408" fill="#9ca3af" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">receipts, notifications, dashboard, campaigns</text>
 
-  <line x1="583" y1="76" x2="583" y2="96" class="arw" marker-end="url(#a)"/>
+  <!-- ===================== the loop ===================== -->
+  <text x="424" y="26" fill="#6b7280" font-size="12" font-weight="700" letter-spacing="1">HOW THE READ RECEIPT HAPPENS</text>
 
-  <rect x="430" y="98" width="306" height="34" class="box"/>
-  <text x="444" y="120" class="t"><tspan font-weight="700">2</tspan>  Gmail mails the HTML, pixel included</text>
+  <rect x="424" y="40" width="312" height="36" rx="6" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="440" y="63" fill="#6b7280" font-size="13"><tspan font-weight="700">1</tspan>   you hit send</text>
+  <line x1="580" y1="76" x2="580" y2="96" stroke="#9ca3af" stroke-width="1.5" marker-end="url(#a)"/>
 
-  <line x1="583" y1="132" x2="583" y2="152" class="arw" marker-end="url(#a)"/>
+  <rect x="424" y="98" width="312" height="36" rx="6" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="440" y="121" fill="#6b7280" font-size="13"><tspan font-weight="700">2</tspan>   Gmail mails the HTML, pixel included</text>
+  <line x1="580" y1="134" x2="580" y2="154" stroke="#9ca3af" stroke-width="1.5" marker-end="url(#a)"/>
 
-  <rect x="430" y="154" width="306" height="46" class="box keep"/>
-  <text x="444" y="174" class="t" fill="#059669"><tspan font-weight="700">3</tspan>  Bob opens it, his mail client</text>
-  <text x="444" y="191" class="t" fill="#059669">    loads that pixel from mailsuite.com</text>
+  <rect x="424" y="156" width="312" height="50" rx="6" fill="none" stroke="#059669" stroke-width="1.5"/>
+  <text x="440" y="177" fill="#059669" font-size="13"><tspan font-weight="700">3</tspan>   Bob opens it, his mail client</text>
+  <text x="440" y="195" fill="#059669" font-size="13">     loads that pixel from mailsuite.com</text>
+  <line x1="580" y1="206" x2="580" y2="226" stroke="#9ca3af" stroke-width="1.5" marker-end="url(#a)"/>
 
-  <line x1="583" y1="200" x2="583" y2="220" class="arw" marker-end="url(#a)"/>
+  <rect x="424" y="228" width="312" height="36" rx="6" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="440" y="251" fill="#6b7280" font-size="13"><tspan font-weight="700">4</tspan>   their server logs "a3f9 = opened"</text>
+  <line x1="580" y1="264" x2="580" y2="284" stroke="#9ca3af" stroke-width="1.5" marker-end="url(#a)"/>
 
-  <rect x="430" y="222" width="306" height="34" class="box"/>
-  <text x="444" y="244" class="t"><tspan font-weight="700">4</tspan>  their server logs "a3f9 = opened"</text>
+  <rect x="424" y="286" width="312" height="50" rx="6" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="440" y="307" fill="#6b7280" font-size="13"><tspan font-weight="700">5</tspan>   Mailsuite polls /trace/2/status</text>
+  <text x="440" y="325" fill="#6b7280" font-size="13">     and paints the ticks &#10003;&#10003;</text>
 
-  <line x1="583" y1="256" x2="583" y2="276" class="arw" marker-end="url(#a)"/>
-
-  <rect x="430" y="278" width="306" height="46" class="box"/>
-  <text x="444" y="298" class="t"><tspan font-weight="700">5</tspan>  Mailsuite polls /trace/2/status</text>
-  <text x="444" y="315" class="t">    and paints the ticks &#10003;&#10003;</text>
-
-  <text x="430" y="352" class="t" font-size="12">The watermark appears nowhere in this loop.</text>
-  <text x="430" y="370" class="t" font-size="12">Deleting it changes nothing about steps 1 to 5.</text>
-
-  <!-- ================= where we sit ================= -->
-  <line x1="24" y1="292" x2="354" y2="292" class="arw" stroke-dasharray="4 4" marker-end=""/>
-  <text x="24" y="316" class="h">WHERE THIS EXTENSION SITS</text>
-  <text x="24" y="340" class="t" font-size="12">Mailsuite injects both. Nothing of theirs is patched</text>
-  <text x="24" y="358" class="t" font-size="12">or replaced. This extension deletes one &lt;div&gt; from</text>
-  <text x="24" y="376" class="t" font-size="12">the compose box before send, and leaves the rest.</text>
-  <text x="24" y="400" class="mono" font-size="11">read receipts, notifications, dashboard,</text>
-  <text x="24" y="416" class="mono" font-size="11">campaigns, link tracking &#8594; all still theirs</text>
+  <text x="424" y="368" fill="#6b7280" font-size="12">The watermark appears nowhere in this loop.</text>
+  <text x="424" y="386" fill="#6b7280" font-size="12">Deleting it changes nothing about steps 1 to 5.</text>
 </svg>
