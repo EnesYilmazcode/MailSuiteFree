@@ -187,6 +187,17 @@ test('a beacon inside the real signature survives it', () => {
   assert.equal(root.querySelectorAll('img[src*="/trace/mail/"]').length, 1);
 });
 
+test('catches the signature after Gmail has prefixed the id', () => {
+  /* Gmail rewrites ids when it renders or quotes a message, which is why
+     Mailsuite ships its own un-prefixing helper. */
+  const root = compose(
+    '<div>Body</div>' + realSignature(18).replace('id="mt-signature"', 'id="m_-8891234567890mt-signature"'),
+  );
+
+  assert.equal(detect.scrubRoot(root), 1);
+  assert.equal(root.querySelector('[id*="mt-signature"]'), null);
+});
+
 test('markedBlocks returns only the outermost match', () => {
   const root = compose(realSignature(17).replace('alt="Mailsuite"', 'alt="Mailsuite" class="mt-signature-logo"'));
   const blocks = detect.markedBlocks(root);

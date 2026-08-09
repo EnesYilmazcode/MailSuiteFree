@@ -10,14 +10,23 @@
   const detect = globalThis.MailSuiteFreeDetect;
   if (!detect) return;
 
-  /* Gmail's compose body, across layouts and locales. */
-  const COMPOSE = [
-    'div[g_editable="true"]',
-    'div.Am.Al.editable',
-    'div[contenteditable="true"][role="textbox"]',
-    'div[aria-label="Message Body"]',
-  ].join(',');
-
+  /*
+   * Scan the whole page, not a list of guessed compose selectors.
+   *
+   * The first version scoped every scan to div[g_editable="true"] and friends.
+   * That put a guess about Gmail's internal class names on the critical path:
+   * if the compose root did not match, nothing was ever examined and the
+   * extension silently did nothing.
+   *
+   * It does not need to be that fragile. #mt-signature and
+   * data-signature-template are Mailsuite's own labels and appear on nothing
+   * else, so if one is in the page it is theirs and it can go. Scanning from
+   * document.body removes an entire class of failure.
+   *
+   * Side effect worth knowing: this also hides the signature on Mailtrack mail
+   * you receive. Purely visual, in your browser, and it changes nothing about
+   * what anybody sent.
+   */
   const settings = { enabled: true, keepUnsubscribe: true, removed: 0 };
 
   chrome.storage.local.get(settings).then((stored) => Object.assign(settings, stored));
@@ -26,14 +35,14 @@
   });
 
   const scrubAll = () => {
-    if (!settings.enabled) return 0;
-    let removed = 0;
-    for (const root of document.querySelectorAll(COMPOSE)) {
-      removed += detect.scrubRoot(root, { keepUnsubscribe: settings.keepUnsubscribe });
-    }
+    if (!settings.enabled || !document.body) return 0;
+    const removed = detect.scrubRoot(document.body, {
+      keepUnsubscribe: settings.keepUnsubscribe,
+    });
     if (removed) {
       settings.removed += removed;
       chrome.storage.local.set({ removed: settings.removed });
+      console.log(`[MailSuiteFree] removed ${removed} signature block(s)`);
     }
     return removed;
   };
@@ -81,5 +90,9 @@
     true,
   );
 
+  /* Says the content script is alive. If this line is missing from the Gmail
+     console, the extension is not loaded, which is a different problem from the
+     extension not working. */
+  console.log('[MailSuiteFree] active on', location.host);
   scrubAll();
 })();
